@@ -1,0 +1,33 @@
+name: Update README.adoc with Latest Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get latest release version
+        id: get_release
+        run: |
+          LATEST_VERSION=$(git tag --sort=-creatordate | head -n 1)
+          if [ -z "$LATEST_VERSION" ]; then
+            LATEST_VERSION="0.0.0"
+          fi
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+
+      - name: Update README.adoc
+        run: |
+          sed -i "s/:TESTJARS_VERSION:.*/:TESTJARS_VERSION: ${{ env.LATEST_VERSION }}/" README.adoc
+
+      - name: Commit & Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "Update README.adoc with latest release version"
+          git push || echo "No changes to commit"
